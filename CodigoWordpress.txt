@@ -1,0 +1,76 @@
+--CAMBIO DE PREFIJO DE TABLAS "PREFIX"
+
+RENAME table `wp_commentmeta` TO `ri_commentmeta`;
+RENAME table `wp_comments` TO `ri_comments`;
+RENAME table `wp_links` TO `ri_links`;
+RENAME table `wp_options` TO `ri_options`;
+RENAME table `wp_postmeta` TO `ri_postmeta`;
+RENAME table `wp_posts` TO `ri_posts`;
+RENAME table `wp_term_relationships` TO `ri_term_relationships`;
+RENAME table `wp_term_taxonomy` TO `ri_term_taxonomy`;
+RENAME table `wp_termmeta` TO `ri_termmeta`;
+RENAME table `wp_terms` TO `ri_terms`;
+RENAME table `wp_usermeta` TO `ri_usermeta`;
+RENAME table `wp_users` TO `ri_users`;
+
+
+--ACTUALIZACIONES DE INFORMACION DE TABLAS AL NUEVO PREFIX
+1) Actualizar la tabla options:
+
+SELECT option_name FROM ri_options WHERE option_name LIKE '%wp_%' LIMIT 1;
+SELECT * FROM ri_options WHERE option_name LIKE '%wp_%';
+SELECT option_name FROM  ri_options  WHERE option_name = 'wp_user_roles';
+UPDATE ri_options SET option_name = 'ri_user_roles' WHERE option_name = 'wp_user_roles';
+
+UPDATE ri_options
+SET option_name = REPLACE(option_name, 'wp_', 'ri_')
+WHERE option_name LIKE '%wp_%';
+
+SELECT * FROM ri_options WHERE option_name LIKE '%wp_%' 
+and option_id ='89'
+limit 1;
+
+SELECT option_name FROM  ri_options  WHERE option_name = 'ri_user_roles';
+
+2)Actualizar la tabla options: ri_usermeta
+
+SELECT * FROM ri_usermeta WHERE meta_key LIKE '%wp_%';
+
+SELECT * FROM ri_usermeta WHERE meta_key LIKE '%wp_%' limit 1;
+
+SELECT * FROM ri_usermeta WHERE umeta_id in ('12','13','14','17','19');
+
+--UPDATE `ri_usermeta` SET `meta_key` = REPLACE(`meta_key`, 'wp_', 'ri_') WHERE `meta_key` LIKE 'wp_%';
+
+UPDATE `ri_usermeta` SET `meta_key` = 'dismissed_ri_pointers' WHERE `meta_key` ='dismissed_wp_pointers';
+
+
+---Archivo yml
+
+
+## docker-compose para correr wordpress con una base de datos en mysql
+
+version: '3.1'
+
+services:
+
+  wordpress:
+    image: wordpress:php7.1-apache
+    ports:
+      - 8080:80
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: root
+      WORDPRESS_DB_NAME: wordpress
+    links:
+      - mysql:mysql
+
+  mysql:
+    image: mysql:8.0.13
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ~/docker/mysql-data:/var/lib/mysql
